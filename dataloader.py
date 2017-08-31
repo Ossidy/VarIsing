@@ -172,7 +172,7 @@ def dataloader(batchsize=16, datafile="./Ltest", fileformat=".dat", is_json=Fals
 			yield torch.FloatTensor(output), torch.FloatTensor(T_label)
 
 if __name__ == "__main__":
-	x = dataloader(datafile="./L32", dummy_dim=True)
+	x = dataloader(datafile="./Ltest", dummy_dim=True)
 	for i in range(10):
 		# print(i)
 		lattice, T = next(x)
