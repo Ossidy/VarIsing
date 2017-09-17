@@ -2,7 +2,7 @@
 import torch
 import numpy as np 
 import os
-
+from scipy.interpolate import UnivariateSpline, InterpolatedUnivariateSpline
 import model as dcgan
 
 
@@ -59,3 +59,18 @@ def get_observables(lattice):
 	print(mag)
 	mag = mag / float(lattice.size)
 	return mag
+
+def get_spline_interp(filename="./statis.txt"):
+	with open(filename) as f:
+		data = f.read().splitlines()
+		data = [x.split(" ") for x in data]
+
+	data = np.array(data, dtype="float")
+
+	xdata = data[:, 0]
+	ydata = data[:, 2]
+	xdata = xdata[::-1]
+	ydata = ydata[::-1]
+	# print(xdata, ydata)
+	spl = InterpolatedUnivariateSpline(xdata, ydata)
+	return spl

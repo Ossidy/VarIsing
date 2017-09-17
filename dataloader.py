@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 import random
 from scipy.optimize import curve_fit
+from scipy.interpolate import UnivariateSpline, InterpolatedUnivariateSpline
 
 import json
 import glob
@@ -28,13 +29,31 @@ def get_params(func, filename):
 
 	return popt
 
+def get_spline_interp(filename):
+	with open("./statis.txt") as f:
+		data = f.read().splitlines()
+		data = [x.split(" ") for x in data]
+
+	data = np.array(data, dtype="float")
+
+	xdata = data[:, 0]
+	ydata = data[:, 2]
+	xdata = xdata[::-1]
+	ydata = ydata[::-1]
+	# print(xdata, ydata)
+	spl = InterpolatedUnivariateSpline(xdata, ydata)
+	return spl
+
+# spl = UnivariateSpline(xdata, ydata, s=1)
+# spl = InterpolatedUnivariateSpline(xdata, ydata)
+
 def load_blobs(filename, is_json=False):
-	print("Loading data from file: " + filename)
+	print("Loading data from file: " + filename + "...")
 	with open(filename) as f:
 		data = f.read().splitlines()
 	data = [x.split(" ") for x in data]
 	# print(data)
-	print("Creating data blobs from file: " + filename)
+	# print("Creating data blobs from file: " + filename)
 	blobs = []
 	for item in data:
 		blob = {}
@@ -57,7 +76,7 @@ def load_blobs(filename, is_json=False):
 			json.dump(blobs, outfile)
 			# np.save(outf)
 
-	print("Finished!!!")
+	# print("Finished!!!")
 	
 	return blobs
 
@@ -71,7 +90,7 @@ def resize_lattice(lattice_array):
 	lattice = np.array(lattice_array)
 	lattice = np.resize(lattice, (L, L))
 	# print(lattice)
-	return lattice.tolist()
+	return lattice#.tolist()
 
 def plot_lattice(lattice):
 	cmap = colors.ListedColormap(['white', 'black'])
@@ -96,7 +115,8 @@ def plot_lattice(lattice):
 def dataloader(batchsize=16, datafile="./Ltest", fileformat=".dat", is_json=False, rep_time=1000, flip=True, rotate=True, reverse=True, dummy_dim=True):
 	# print(data)
 	if dummy_dim:
-		popt = get_params(sigmoid, "./statis.txt")
+		# popt = get_params(sigmoid, "./statis.txt")
+		interp = get_spline_interp("./statis.txt")
 
 
 	data_names = []
@@ -153,11 +173,12 @@ def dataloader(batchsize=16, datafile="./Ltest", fileformat=".dat", is_json=Fals
 					rd_num = rd.uniform(0, 1)
 					if rd_num < 0.5:
 						lattice *= -1
-
+				# print(type(lattice))
 				if dummy_dim:
 					# add dummy dimension according to the abs_mag
 					dummy_channel = np.zeros(shape=lattice.shape)
-					dummy_channel.fill(2 * (sigmoid(blobs[j]["T"], *popt) - 0.5))
+					# dummy_channel.fill(2 * (sigmoid(blobs[j]["T"], *popt) - 0.5))
+					dummy_channel.fill(2 * (interp(blobs[j]["T"]) - 0.5))
 					# print(dummy_channel.shape)
 					lattice_channel = np.expand_dims(lattice, axis=0)
 					dummy_channel = np.expand_dims(dummy_channel, axis=0)
